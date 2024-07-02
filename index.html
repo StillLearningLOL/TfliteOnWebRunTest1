@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TFLite Image Classifier</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-cpu"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite/dist/tf-tflite.min.js"></script>
+</head>
+<body>
+  <h1>TFLite Image Classifier</h1>
+  <input type="file" accept="image/*" onchange="classifyImage(event)">
+  <br><br>
+  <img id="inputImage" style="max-width: 400px;">
+  <br><br>
+  <div id="result"></div>
+  <script>
+    async function classifyImage(event) {
+      const file = event.target.files[0];
+      const img = document.getElementById('inputImage');
+      img.src = URL.createObjectURL(file);
+
+      img.onload = async () => {
+        // 设置 WASM 模块路径
+        tflite.setWasmPath('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite/dist/');
+
+        // 加载 TFLite 模型
+        const tfliteModel = await tflite.loadTFLiteModel('https://raw.githubusercontent.com/StillLearningLOL/TfliteOnWebRunTest1/main/modeltf.tflite');
+
+        // 准备输入张量
+        const input = tf.browser.fromPixels(img).resizeBilinear([224, 224]).toFloat().div(255).expandDims(0);
+
+        // 运行推理并获取输出张量
+        const outputTensor = tfliteModel.predict(input);
+
+        // 获取分类结果
+        const predictions = Array.from(outputTensor.dataSync());
+        document.getElementById('result').innerText = `Predicted class: ${predictions.indexOf(Math.max(...predictions))}`;
+      };
+    }
+  </script>
+</body>
+</html>
